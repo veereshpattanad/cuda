@@ -1,49 +1,43 @@
-def add(x, y):
-    return x + y
+import torch
+import torch.nn as nn
+import torch.optim as optim
 
-def subtract(x, y):
-    return x - y
+# Check for CUDA availability
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
 
-def multiply(x, y):
-    return x * y
+# Dummy dataset
+X = torch.randn(1000, 10).to(device)
+y = torch.randn(1000, 1).to(device)
 
+# Simple feedforward neural network
+class SimpleNet(nn.Module):
+    def __init__(self):
+        super(SimpleNet, self).__init__()
+        self.fc1 = nn.Linear(10, 50)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(50, 1)
 
-def calculator():
-    print("Select operation:")
-    print("1. Add")
-    print("2. Subtract")
-    print("3. Multiply")
-    print("4. Divide")
+    def forward(self, x):
+        return self.fc2(self.relu(self.fc1(x)))
 
-    while True:
-        choice = input("Enter choice (1/2/3/4): ")
+# Instantiate and move model to the GPU (if available)
+model = SimpleNet().to(device)
 
-        if choice in ['1', '2', '3', '4']:
-            try:
-                num1 = float(input("Enter first number: "))
-                num2 = float(input("Enter second number: "))
-            except ValueError:
-                print("Invalid input! Please enter numeric values.")
-                continue
+# Loss and optimizer
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-            if choice == '1':
-                print(f"{num1} + {num2} = {add(num1, num2)}")
+# Training loop
+num_epochs = 10
+for epoch in range(num_epochs):
+    model.train()
 
-            elif choice == '2':
-                print(f"{num1} - {num2} = {subtract(num1, num2)}")
+    outputs = model(X)
+    loss = criterion(outputs, y)
 
-            elif choice == '3':
-                print(f"{num1} * {num2} = {multiply(num1, num2)}")
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
 
-            elif choice == '4':
-                result = divide(num1, num2)
-                print(f"{num1} / {num2} = {result}")
-
-            next_calculation = input("Do you want to perform another calculation? (yes/no): ")
-            if next_calculation.lower() != 'yes':
-                break
-        else:
-            print("Invalid Input")
-
-if __name__ == "__main__":
-    calculator()
+    print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}")
